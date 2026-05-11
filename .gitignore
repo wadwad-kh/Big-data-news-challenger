@@ -1,5 +1,17 @@
-.venv/
+# Ignore PDF
+*.pdf
+
+# Ignore data directory
+data/
+
+# Python caching
 __pycache__/
 *.pyc
+
+# Virtual environment
+venv/
+.venv/
 .env
-data/incoming/*.json
+
+# Streamlit
+.streamlit/
