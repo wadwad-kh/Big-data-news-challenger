@@ -12,8 +12,46 @@ except ImportError:
 # Configure the Streamlit page
 st.set_page_config(page_title="News Pulse Dashboard", layout="wide")
 
+# UI Localization Dictionary
+translations = {
+    "English": {
+        "title": "📰 News Pulse Live Dashboard",
+        "source_mix": "Source Mix",
+        "hourly_volume": "Hourly Volume",
+        "top_keywords": "Top 10 Keywords",
+        "llm_summary": "LLM Summary",
+        "waiting_source": "Waiting for source data...",
+        "waiting_window": "Waiting for window data...",
+        "waiting_keywords": "Waiting for top words data...",
+        "waiting_summary": "Waiting for keywords to generate summary...",
+        "error_llm": "Error calling LLM summary:",
+        "fallback_summary": "**Fallback Summary:** The current top news trends revolve around these keywords:"
+    },
+    "العربية": {
+        "title": "📰 لوحة بيانات نبض الأخبار",
+        "source_mix": "مزيج المصادر",
+        "hourly_volume": "حجم الأخبار لكل ساعة",
+        "top_keywords": "أهم 10 كلمات رئيسية",
+        "llm_summary": "ملخص الذكاء الاصطناعي",
+        "waiting_source": "في انتظار بيانات المصدر...",
+        "waiting_window": "في انتظار بيانات الوقت...",
+        "waiting_keywords": "في انتظار بيانات الكلمات الرئيسية...",
+        "waiting_summary": "في انتظار الكلمات لإنشاء الملخص...",
+        "error_llm": "خطأ في الاتصال بملخص الذكاء الاصطناعي:",
+        "fallback_summary": "**ملخص بديل:** تدور أهم اتجاهات الأخبار الحالية حول هذه الكلمات الرئيسية:"
+    }
+}
+
+# Sidebar Language Toggle
+st.sidebar.header("Settings / الإعدادات")
+selected_lang = st.sidebar.radio("Language / اللغة", ["English", "العربية"])
+
+t = translations[selected_lang]
+# Pass a language code for Person 1's LLM function
+lang_code = "en" if selected_lang == "English" else "ar"
+
 # Title
-st.title("📰 News Pulse Live Dashboard")
+st.title(t["title"])
 
 # Function to safely load CSV data
 def load_data(filepath):
@@ -33,14 +71,14 @@ top_words_df = load_data("data/output/top_words.csv")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Source Mix")
+    st.subheader(t["source_mix"])
     if not source_df.empty:
         st.bar_chart(source_df.set_index('source'))
     else:
-        st.info("Waiting for source data...")
+        st.info(t["waiting_source"])
 
 with col2:
-    st.subheader("Hourly Volume")
+    st.subheader(t["hourly_volume"])
     if not window_df.empty:
         # Create a combined 'window' label or just use 'window_start'
         if 'window_start' in window_df.columns:
@@ -49,21 +87,21 @@ with col2:
         else:
             st.line_chart(window_df)
     else:
-        st.info("Waiting for window data...")
+        st.info(t["waiting_window"])
 
 st.markdown("---")
 
 col3, col4 = st.columns([1, 2])
 
 with col3:
-    st.subheader("Top 10 Keywords")
+    st.subheader(t["top_keywords"])
     if not top_words_df.empty:
         st.dataframe(top_words_df, use_container_width=True)
     else:
-        st.info("Waiting for top words data...")
+        st.info(t["waiting_keywords"])
 
 with col4:
-    st.subheader("LLM Summary")
+    st.subheader(t["llm_summary"])
     
     # Try generating a summary based on top words
     if not top_words_df.empty:
@@ -71,15 +109,16 @@ with col4:
         
         if llm_summary and hasattr(llm_summary, 'generate_summary'):
             try:
-                summary_text = llm_summary.generate_summary(top_words_list)
+                # We pass the selected language code so the LLM outputs in the correct language!
+                summary_text = llm_summary.generate_summary(top_words_list, lang_code=lang_code)
                 st.write(summary_text)
             except Exception as e:
-                st.warning(f"Error calling LLM summary: {e}")
-                st.write(f"**Fallback Summary:** The current top news trends revolve around these keywords: {', '.join(top_words_list[:5])}.")
+                st.warning(f"{t['error_llm']} {e}")
+                st.write(f"{t['fallback_summary']} {', '.join(top_words_list[:5])}.")
         else:
-            st.write(f"**Fallback Summary (llm_summary.py not found/ready):** The current top news trends revolve around these keywords: {', '.join(top_words_list[:5])}.")
+            st.write(f"{t['fallback_summary']} {', '.join(top_words_list[:5])}.")
     else:
-        st.info("Waiting for keywords to generate summary...")
+        st.info(t["waiting_summary"])
 
 # Auto-refresh every 5 seconds
 time.sleep(5)
