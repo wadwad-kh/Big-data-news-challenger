@@ -1,0 +1,16 @@
+# Ignore PDF
+*.pdf
+
+# Ignore data directory (as it will contain generated files)
+data/
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.env
+
+# Streamlit
+.streamlit/
